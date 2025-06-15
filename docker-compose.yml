@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.spring
+    image: my-spring-boot-app
+    ports:
+      - "8004:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/h2db/db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
+      - SPRING_DATASOURCE_DRIVER=org.h2.Driver
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=${H2_DB_PASSWORD}
+      - SPRING_JPA_DIALECT=org.hibernate.dialect.H2Dialect
+      - H2_DB_PASSWORD=${H2_DB_PASSWORD}
+    volumes:
+      - ./h2data:/data/h2db
+    networks:
+      - nginx-network
+
+networks:
+  nginx-network:
+    external: true

@@ -1,0 +1,33 @@
+[33m5d7edee[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m deploy
+[33m474eb31[m Resolve merge conflict in pertinencia.ipynb
+[33mc853f68[m Resolve merge conflict in pertinencia.ipynb
+[33maa49d7b[m Merge branch 'main' of https://github.com/LeonardoVieiraGuimaraes/SpringBootDeploy
+[33m94074bd[m Changes to be committed: 	new file:   src/main/java/com/example/deploy/config/CorsConfig.java
+[33mf7ef529[m Changes to be committed: 	modified:   docker-compose.yml 	new file:   init.sql
+[33m1b80bfe[m Changes to be committed: 	modified:   docker-compose.yml
+[33mb8f86fa[m Changes to be committed: 	modified:   docker-compose.yml
+[33mb337301[m Changes to be committed: 	modified:   README.md
+[33m4ee41c1[m Changes to be committed: 	deleted:    src/main/java/com/example/deploy/config/CorsConfig.java 	new file:   src/main/java/com/example/deploy/controller/AlunoController.java 	new file:   src/main/java/com/example/deploy/controller/AlunoViewController.java 	modified:   src/main/java/com/example/deploy/controller/ProdutoController.java 	new file:   src/main/java/com/example/deploy/model/Aluno.java 	new file:   src/main/java/com/example/deploy/repository/AlunoRepository.java 	new file:   src/main/java/com/example/deploy/service/AlunoService.java 	new file:   src/main/resources/templates/alunos/form.html 	new file:   src/main/resources/templates/alunos/listar.html
+[33mf01422e[m Changes to be committed: 	new file:   src/main/java/com/example/deploy/config/CorsConfig.java
+[33m13b90d7[m Changes to be committed: 	modified:   docker-compose.yml 	modified:   src/main/resources/application.yaml
+[33m7526de9[m Changes to be committed: 	modified:   .github/workflows/deploy.yml
+[33mc308ac6[m Changes to be committed: 	modified:   docker-compose.yml 	modified:   pom.xml 	modified:   src/main/java/com/example/deploy/controller/HelloController.java 	new file:   src/main/java/com/example/deploy/controller/HomeController.java
+[33mfbae0c7[m Changes to be committed: 	modified:   Dockerfile.mysql
+[33m59e29a7[m Changes to be committed: 	modified:   src/main/resources/application.yaml 	deleted:    src/test/resources/application-test.yaml
+[33m7bbcdab[m Changes to be committed: 	modified:   pom.xml 	new file:   src/main/java/com/example/deploy/controller/ProdutoViewController.java 	modified:   src/main/java/com/example/deploy/service/ProdutoService.java 	new file:   src/main/resources/templates/produtos/form.html 	new file:   src/main/resources/templates/produtos/listar.html
+[33m8ecd837[m Changes to be committed: 	deleted:    Dockerfile 	deleted:    docker-compose copy.yml 	modified:   docker-compose.yml
+[33mf62d951[m Changes to be committed: 	modified:   docker-compose.yml 	modified:   pom.xml
+[33mc493471[m Changes to be committed: 	modified:   src/test/java/com/example/deploy/DeployApplicationTests.java 	modified:   src/test/resources/application-test.yaml
+[33m97b9493[m Changes to be committed: 	modified:   .github/workflows/deploy.yml 	modified:   pom.xml 	modified:   src/test/java/com/example/deploy/DeployApplicationTests.java 	new file:   src/test/resources/application-test.yaml
+[33mc45225e[m Changes to be committed: 	modified:   pom.xml
+[33m003b47b[m Changes to be committed: 	modified:   .github/workflows/deploy.yml 	modified:   Dockerfile 	new file:   Dockerfile.mysql 	new file:   Dockerfile.spring 	new file:   README.md 	new file:   docker-compose copy.yml 	modified:   pom.xml 	new file:   src/main/java/com/example/deploy/controller/ProdutoController.java 	new file:   src/main/java/com/example/deploy/model/Produto.java 	new file:   src/main/java/com/example/deploy/repository/ProdutoRepository.java 	new file:   src/main/java/com/example/deploy/service/ProdutoService.java 	deleted:    src/main/resources/application.properties 	new file:   src/main/resources/application.yaml
+[33m33518ef[m Changes to be committed: 	modified:   .github/workflows/deploy.yml
+[33md4fd634[m Changes to be committed: 	deleted:    .github/workflows/maven-publish.yml 	deleted:    .github/workflows/maven.yml
+[33m9299869[m Create maven-publish.yml
+[33m601d6cb[m Changes to be committed: 	modified:   .github/workflows/maven.yml
+[33m57eed80[m Changes to be committed: 	new file:   .github/workflows/maven.yml
+[33m53ae295[m Changes to be committed: 	modified:   .github/workflows/deploy.yml
+[33m3f78755[m Changes to be committed: 	modified:   .github/workflows/deploy.yml
+[33me32aa60[m Changes to be committed: 	modified:   .github/workflows/deploy.yml 	modified:   docker-compose.yml
+[33m27b6ded[m Changes to be committed: 	modified:   .github/workflows/deploy.yml
+[33m037e889[m first commit

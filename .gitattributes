@@ -1,0 +1,7 @@
+# Força arquivos de texto a usar LF
+* text=auto
+
+# Arquivos binários não devem ser alterados
+*.jar binary
+*.png binary
+*.jpg binary
