@@ -15,7 +15,6 @@ services:
       - SPRING_DATASOURCE_USERNAME=sa
       - SPRING_DATASOURCE_PASSWORD=${H2_DB_PASSWORD}
       - SPRING_JPA_DIALECT=org.hibernate.dialect.H2Dialect
-      - H2_DB_PASSWORD=${H2_DB_PASSWORD}
     volumes:
       - ./h2data:/data/h2db
     networks:

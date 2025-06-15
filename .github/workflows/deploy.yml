@@ -64,7 +64,9 @@ jobs:
           username: ${{ secrets.sftp_user }}
           key: ${{ secrets.sftp_private_key }}
           port: ${{ secrets.sftp_port }}
+          envs: H2_DB_PASSWORD
           script: |
+            export H2_DB_PASSWORD="${{ secrets.H2_DB_PASSWORD }}"
             cd ProgramacaoWebSpringBoot
             docker compose up -d --build
             docker compose restart
