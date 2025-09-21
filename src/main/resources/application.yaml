@@ -1,3 +1,9 @@
+server:
+  port: ${SERVER_PORT:8013}
+  servlet:
+    context-path: ${SERVER_CONTEXT_PATH:/}
+  forward-headers-strategy: framework
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL}
@@ -12,11 +18,16 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: ${SPRING_JPA_SHOW_SQL:true}
     properties:
       hibernate:
         dialect: ${SPRING_JPA_DIALECT:org.hibernate.dialect.H2Dialect}
   h2:
     console:
-      enabled: true
+      enabled: ${H2_CONSOLE_ENABLED:true}
       path: /h2-console
+      
+logging:
+  level:
+    '[com.example.deploy]': ${LOG_LEVEL:INFO}
+    '[org.springframework.web]': ${LOG_LEVEL_WEB:WARN}

@@ -1,6 +1,8 @@
-# Projeto Deploy - Spring Boot CRUD Completo
+# ProWebV01 - Spring Boot CRUD Completo
 
 Este projeto foi desenvolvido para fins didáticos nas disciplinas de Programação Web e Arquitetura de Aplicações Web, demonstrando a construção de APIs REST e aplicações web completas com Spring Boot, integração com banco de dados, documentação automática e deploy automatizado.
+
+**Homeserver configurado para:** `prowebv01.leoproti.com.br`
 
 ---
 
@@ -17,7 +19,52 @@ Este projeto foi desenvolvido para fins didáticos nas disciplinas de Programaç
 - **Deploy automatizado:**  
   Pipeline GitHub Actions para build e deploy contínuo no servidor remoto.
 - **Banco de dados:**  
-  H2 em memória para desenvolvimento e MariaDB para produção (via Docker).
+  H2 em memória para desenvolvimento e H2 em arquivo para produção (via Docker).
+- **CORS configurado:**  
+  Suporte para acesso do domínio `prowebv01.leoproti.com.br`.
+
+## Deploy e Configuração do Homeserver
+
+### Configuração Atual
+- **Domínio:** prowebv01.leoproti.com.br
+- **Porta:** 8013
+- **Perfil:** Produção
+- **Banco:** H2 (arquivo persistente)
+
+### Scripts de Deploy
+
+#### Windows PowerShell:
+```powershell
+.\deploy.ps1
+```
+
+#### Linux/macOS:
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+### Deploy Manual:
+```bash
+# Parar containers existentes
+docker-compose down
+
+# Construir e iniciar
+docker-compose up --build -d
+
+# Verificar status
+docker-compose ps
+
+# Acompanhar logs
+docker-compose logs -f app
+```
+
+### Configurações de Produção
+- Console H2 desabilitado
+- Logs configurados para `/var/log/prowebv01/application.log`
+- Pool de conexões otimizado (20 máx, 5 mín)
+- Compressão HTTP habilitada
+- CORS restritivo para domínio específico
 
 ---
 

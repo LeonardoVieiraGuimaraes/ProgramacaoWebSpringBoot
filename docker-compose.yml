@@ -5,21 +5,36 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.spring
-    image: my-spring-boot-app
+    image: prowebv01-spring-boot-app
+    container_name: prowebv01-app
     ports:
-      - "8004:8080"
+      - "8013:8013"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=8013
+      - SERVER_CONTEXT_PATH=/
       - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/h2db/db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
       - SPRING_DATASOURCE_DRIVER=org.h2.Driver
       - SPRING_DATASOURCE_USERNAME=sa
-      - SPRING_DATASOURCE_PASSWORD=${H2_DB_PASSWORD}
+      - SPRING_DATASOURCE_PASSWORD=${H2_DB_PASSWORD:-defaultpassword}
       - SPRING_JPA_DIALECT=org.hibernate.dialect.H2Dialect
+      - SPRING_JPA_SHOW_SQL=false
+      - H2_CONSOLE_ENABLED=false
+      - LOG_LEVEL=INFO
+      - LOG_LEVEL_WEB=WARN
     volumes:
       - ./h2data:/data/h2db
+    restart: unless-stopped
     networks:
-      - nginx-network
+      - prowebv01-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8013/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
-  nginx-network:
-    external: true
+  prowebv01-network:
+    driver: bridge
+    name: prowebv01-network

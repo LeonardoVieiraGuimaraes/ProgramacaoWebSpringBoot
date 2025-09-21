@@ -1,0 +1,54 @@
+# Configuração específica para produção - prowebv01.leoproti.com.br
+server:
+  port: 8013
+  servlet:
+    context-path: /
+  forward-headers-strategy: framework
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+spring:
+  profiles:
+    active: prod
+  datasource:
+    url: jdbc:h2:file:/data/h2db/db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ${H2_DB_PASSWORD:defaultpassword}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+      leak-detection-threshold: 60000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        '[format_sql]': false
+        '[use_sql_comments]': false
+        '[generate_statistics]': false
+        cache:
+          '[use_second_level_cache]': false
+  h2:
+    console:
+      enabled: false
+  
+logging:
+  level:
+    '[com.example.deploy]': INFO
+    '[org.springframework.web]': WARN
+    '[org.hibernate.SQL]': WARN
+    '[org.hibernate.type.descriptor.sql.BasicBinder]': WARN
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/prowebv01/application.log
+    max-size: 10MB
+    max-history: 30
