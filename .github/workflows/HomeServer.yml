@@ -49,16 +49,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.HOME_SERVER_SSH_KEY }}
 
-      - name: 🔍 Validate SSH key
-        run: |
-          if [ -z "${{ secrets.HOME_SERVER_SSH_KEY }}" ]; then
-            echo "❌ ERROR: HOME_SERVER_SSH_KEY secret is not configured!"
-            echo "📝 Please configure it at: https://github.com/${{ github.repository }}/settings/secrets/actions"
-            echo "🔑 Add your SSH private key as 'HOME_SERVER_SSH_KEY'"
-            exit 1
-          fi
-          echo "✅ SSH key secret is configured"
-
       - name: 🔐 Configure SSH
         run: |
           mkdir -p ~/.ssh
