@@ -1,11 +1,35 @@
-# Use uma imagem base LTS estável
-FROM openjdk:24-jdk
+# Use uma imagem base LTS estável e mais leve
+FROM eclipse-temurin:21-jre-jammy
+
+# Criar usuário não-root para segurança
+RUN groupadd -r spring && useradd -r -g spring spring
 
 # Defina o diretório de trabalho dentro do contêiner
 WORKDIR /app
 
+# Criar diretório para dados e logs
+RUN mkdir -p /data/h2db /var/log/prowebv01 && \
+    chown -R spring:spring /app /data /var/log/prowebv01
+
 # Copie o arquivo JAR da aplicação para o contêiner
-COPY target/*.jar /app/my-spring-boot-app.jar
+COPY target/*.jar /app/prowebv01-app.jar
+
+# Verificar se o JAR foi copiado corretamente
+RUN ls -la /app/ && \
+    test -f /app/prowebv01-app.jar || (echo "JAR file not found!" && exit 1)
+
+# Mudar para usuário não-root
+USER spring
+
+# Expor porta
+EXPOSE 8013
+
+# Configurar JVM para container
+ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseG1GC -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8013/actuator/health || exit 1
 
 # Comando para executar a aplicação
-ENTRYPOINT ["java", "-jar", "my-spring-boot-app.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar prowebv01-app.jar"]

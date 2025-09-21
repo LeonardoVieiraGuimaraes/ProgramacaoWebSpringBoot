@@ -108,20 +108,72 @@ jobs:
               leonardovieiraxy@ssh.leoproti.com.br << 'EOF'
             cd /home/leonardovieiraxy/projetos/prowebv01
             
+            # Verificar se existe docker-compose.yml
+            if [ ! -f docker-compose.yml ]; then
+              echo "❌ ERROR: docker-compose.yml not found!"
+              ls -la
+              exit 1
+            fi
+            
+            # Mostrar conteúdo do docker-compose para debug
+            echo "📋 Docker Compose configuration:"
+            cat docker-compose.yml
+            
+            # Parar containers existentes
+            echo "🛑 Stopping existing containers..."
+            docker compose down || true
+            
+            # Limpar containers órfãos
+            docker container prune -f || true
+            
             # Build e start do container
+            echo "🔨 Building container..."
             docker compose build --no-cache
+            
+            echo "🚀 Starting container..."
             docker compose up -d
             
             # Aguardar inicialização
-            sleep 20
+            echo "⏳ Waiting for container startup..."
+            sleep 30
             
-            # Verificar se está rodando
-            docker compose ps
+            # Verificar status detalhado
+            echo "📊 Container status:"
+            docker compose ps -a
             
-            # Teste básico na porta 8013
-            curl -f http://localhost:8013/actuator/health || \
-            curl -f http://localhost:8013/ || \
-            echo "Application ainda não respondeu"
+            echo "📝 Container logs (last 50 lines):"
+            docker compose logs --tail=50 app || true
+            
+            # Verificar se o container está realmente rodando
+            if [ "$(docker compose ps -q app)" ]; then
+              container_status=$(docker inspect $(docker compose ps -q app) --format='{{.State.Status}}')
+              echo "Container status: $container_status"
+              
+              if [ "$container_status" = "running" ]; then
+                echo "✅ Container is running successfully!"
+                
+                # Teste de conectividade
+                echo "🧪 Testing connectivity..."
+                for i in {1..5}; do
+                  if curl -f http://localhost:8013/ 2>/dev/null; then
+                    echo "✅ Application is responding on port 8013!"
+                    break
+                  elif curl -f http://localhost:8013/actuator/health 2>/dev/null; then
+                    echo "✅ Health endpoint is responding!"
+                    break
+                  else
+                    echo "⏳ Attempt $i/5 - waiting for application..."
+                    sleep 10
+                  fi
+                done
+              else
+                echo "❌ Container is not running properly!"
+                echo "📋 Full container inspection:"
+                docker inspect $(docker compose ps -q app) || true
+              fi
+            else
+              echo "❌ No container found!"
+            fi
           EOF
 
       - name: ✅ Deployment Summary

@@ -31,3 +31,15 @@ logging:
   level:
     '[com.example.deploy]': ${LOG_LEVEL:INFO}
     '[org.springframework.web]': ${LOG_LEVEL_WEB:WARN}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    defaults:
+      enabled: true
