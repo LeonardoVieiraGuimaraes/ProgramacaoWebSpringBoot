@@ -74,6 +74,22 @@ jobs:
               
               # Criar pasta projetos se não existir
               mkdir -p /home/leonardovieiraxy/projetos/prowebv01
+              cd /home/leonardovieiraxy/projetos/prowebv01
+              
+              # Corrigir permissões do diretório h2data
+              echo "🔧 Corrigindo permissões H2..."
+              if [ -d "./h2data" ]; then
+                echo "Removendo diretório h2data existente com problemas..."
+                sudo rm -rf ./h2data 2>/dev/null || rm -rf ./h2data
+              fi
+              
+              # Criar novo diretório com permissões corretas
+              mkdir -p ./h2data
+              chmod 755 ./h2data
+              chown -R leonardovieiraxy:leonardovieiraxy ./h2data 2>/dev/null || true
+              
+              echo "✅ Permissões H2 configuradas:"
+              ls -la . | grep h2data || echo "Diretório h2data criado"
           EOF
           }
           
@@ -119,19 +135,35 @@ jobs:
             echo "📋 Docker Compose configuration:"
             cat docker-compose.yml
             
-            # Parar containers existentes
+            # Verificar e corrigir permissões H2 novamente antes do deploy
+            echo "🔧 Verificação final de permissões H2..."
+            if [ ! -d "./h2data" ]; then
+              mkdir -p ./h2data
+              chmod 755 ./h2data
+              chown -R leonardovieiraxy:leonardovieiraxy ./h2data 2>/dev/null || true
+            fi
+            
+            # Verificar permissões atuais
+            echo "📊 Permissões atuais do h2data:"
+            ls -la . | grep h2data
+            
+            # Parar containers existentes e limpar
             echo "🛑 Stopping existing containers..."
-            docker compose down || true
+            docker compose down || docker-compose down || true
+            
+            # Limpar imagens antigas para forçar rebuild
+            echo "🗑️ Cleaning old images..."
+            docker rmi prowebv01-spring-boot-app 2>/dev/null || true
             
             # Limpar containers órfãos
             docker container prune -f || true
             
             # Build e start do container
             echo "🔨 Building container..."
-            docker compose build --no-cache
+            docker compose build --no-cache || docker-compose build --no-cache
             
             echo "🚀 Starting container..."
-            docker compose up -d
+            docker compose up -d || docker-compose up -d
             
             # Aguardar inicialização
             echo "⏳ Waiting for container startup..."
@@ -139,14 +171,15 @@ jobs:
             
             # Verificar status detalhado
             echo "📊 Container status:"
-            docker compose ps -a
+            docker compose ps -a || docker-compose ps -a
             
             echo "📝 Container logs (last 50 lines):"
-            docker compose logs --tail=50 app || true
+            docker compose logs --tail=50 app || docker-compose logs --tail=50 app || true
             
             # Verificar se o container está realmente rodando
-            if [ "$(docker compose ps -q app)" ]; then
-              container_status=$(docker inspect $(docker compose ps -q app) --format='{{.State.Status}}')
+            container_id=$(docker compose ps -q app 2>/dev/null || docker-compose ps -q app 2>/dev/null)
+            if [ "$container_id" ]; then
+              container_status=$(docker inspect $container_id --format='{{.State.Status}}')
               echo "Container status: $container_status"
               
               if [ "$container_status" = "running" ]; then
@@ -168,11 +201,25 @@ jobs:
                 done
               else
                 echo "❌ Container is not running properly!"
-                echo "📋 Full container inspection:"
-                docker inspect $(docker compose ps -q app) || true
+                echo "📋 Container logs for debugging:"
+                docker logs $container_id --tail=100 || true
+                
+                # Verificar se é problema de permissão H2
+                docker logs $container_id 2>&1 | grep -i "accessdeniedexception\|permission" && {
+                  echo "🚨 Detected H2 permission issue!"
+                  echo "Attempting to fix permissions..."
+                  sudo chown -R 1000:1000 ./h2data 2>/dev/null || true
+                  sudo chmod -R 755 ./h2data 2>/dev/null || true
+                  
+                  echo "Restarting container..."
+                  docker compose restart app || docker-compose restart app
+                  sleep 20
+                }
               fi
             else
               echo "❌ No container found!"
+              echo "📋 Available containers:"
+              docker ps -a
             fi
           EOF
 

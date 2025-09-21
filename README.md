@@ -30,41 +30,56 @@ Este projeto foi desenvolvido para fins didáticos nas disciplinas de Programaç
 - **Porta:** 8013
 - **Perfil:** Produção
 - **Banco:** H2 (arquivo persistente)
+- **Deploy:** GitHub Actions automatizado
 
-### Scripts de Deploy
+### Scripts de Verificação
 
-#### Windows PowerShell:
+#### Verificação de Permissões H2 (Recomendado antes do deploy):
+
+**Windows PowerShell:**
 ```powershell
-.\deploy.ps1
+.\check-h2-permissions.ps1
 ```
 
-#### Linux/macOS:
+**Linux/macOS:**
 ```bash
-chmod +x deploy.sh
-./deploy.sh
+chmod +x check-h2-permissions.sh
+./check-h2-permissions.sh
 ```
 
 ### Deploy Manual:
 ```bash
 # Parar containers existentes
-docker-compose down
+docker compose down
 
 # Construir e iniciar
-docker-compose up --build -d
+docker compose up --build -d
 
 # Verificar status
-docker-compose ps
+docker compose ps
 
 # Acompanhar logs
-docker-compose logs -f app
+docker compose logs -f app
 ```
 
+### Troubleshooting H2
+Para problemas com o banco de dados H2 (AccessDeniedException, container reiniciando), consulte:
+- **[TROUBLESHOOTING-H2.md](./TROUBLESHOOTING-H2.md)** - Guia completo de solução de problemas
+
+### GitHub Actions Deploy
+O deploy é automatizado via GitHub Actions:
+- **Trigger:** Push na branch `main`
+- **Pipeline:** Build → Deploy → Verificação automática
+- **Correções:** Permissões H2 corrigidas automaticamente
+- **Logs:** Disponíveis na aba Actions do GitHub
+
 ### Configurações de Produção
-- Console H2 desabilitado
-- Logs configurados para `/var/log/prowebv01/application.log`
-- Pool de conexões otimizado (20 máx, 5 mín)
-- Compressão HTTP habilitada
+- Console H2 desabilitado por segurança
+- Logs estruturados com rotação automática
+- Health checks configurados
 - CORS restritivo para domínio específico
+- Usuário container com UID 1000 para compatibilidade
+- Volume H2 com permissões específicas (755)
 
 ---
 
@@ -131,12 +146,40 @@ docker-compose logs -f app
    - API REST: `http://localhost:8080/produtos` e `http://localhost:8080/alunos`
    - Interface web: `http://localhost:8080/produtos-view` e `http://localhost:8080/alunos-view`
    - Swagger: `http://localhost:8080/swagger-ui.html` ou `/swagger-ui/index.html`
+   - Health check: `http://localhost:8080/actuator/health`
 
-### Produção (MariaDB via Docker)
+### Produção (H2 persistente via Docker)
 
-1. Execute `docker-compose up -d --build`.
-2. A aplicação estará disponível em `http://SEU_DOMINIO:8004` (ou conforme configurado).
-3. O banco MariaDB será criado automaticamente com as variáveis definidas no `docker-compose.yml`.
+1. **Verificar permissões primeiro** (recomendado):
+   ```bash
+   # Windows
+   .\check-h2-permissions.ps1
+   
+   # Linux/Mac
+   ./check-h2-permissions.sh
+   ```
+
+2. **Deploy:**
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. **Verificar aplicação:**
+   - Aplicação: `http://prowebv01.leoproti.com.br:8013`
+   - Health check: `http://prowebv01.leoproti.com.br:8013/actuator/health`
+   - API REST: `http://prowebv01.leoproti.com.br:8013/produtos`
+
+4. **Monitoramento:**
+   ```bash
+   # Status do container
+   docker compose ps
+   
+   # Logs em tempo real
+   docker compose logs -f app
+   
+   # Verificar saúde da aplicação
+   curl http://localhost:8013/actuator/health
+   ```
 
 ---
 

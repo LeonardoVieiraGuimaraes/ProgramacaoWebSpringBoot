@@ -1,18 +1,23 @@
 # Use uma imagem base LTS estável e mais leve
 FROM eclipse-temurin:21-jre-jammy
 
-# Criar usuário não-root para segurança
-RUN groupadd -r spring && useradd -r -g spring spring
+# Criar usuário não-root para segurança com UID específico
+RUN groupadd -r spring -g 1000 && useradd -r -g spring -u 1000 spring
 
 # Defina o diretório de trabalho dentro do contêiner
 WORKDIR /app
 
-# Criar diretório para dados e logs
+# Criar diretório para dados e logs com permissões corretas
 RUN mkdir -p /data/h2db /var/log/prowebv01 && \
-    chown -R spring:spring /app /data /var/log/prowebv01
+    chown -R spring:spring /app /data /var/log/prowebv01 && \
+    chmod -R 755 /data /var/log/prowebv01
 
 # Copie o arquivo JAR da aplicação para o contêiner
 COPY target/*.jar /app/prowebv01-app.jar
+
+# Ajustar permissões do JAR
+RUN chown spring:spring /app/prowebv01-app.jar && \
+    chmod 644 /app/prowebv01-app.jar
 
 # Verificar se o JAR foi copiado corretamente
 RUN ls -la /app/ && \
