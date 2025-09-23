@@ -3,15 +3,14 @@ name: 🚀 Deploy Multi-Environment (Dev/Staging/Prod)
 on:
   push:
     branches:
-      - main        # Produção
-      - staging     # Homologação
-      - develop     # Desenvolvimento
+      - v01         # Produção (branch protegida)
+      - main        # Staging/Homologação
+      - v02         # Desenvolvimento
+      - 'feature/*' # Branches de desenvolvimento
     paths-ignore:
       - 'README.md'
       - '**/*.md'
       - 'docs/**'
-  
-  create:
     tags:
       - 'v*'        # Deploy por tags (releases)
   
@@ -51,7 +50,7 @@ jobs:
       - name: 🎯 Determine deployment environment
         id: env
         run: |
-          # Determine environment
+          # Determine environment based on branch and manual input
           if [ "${{ github.event.inputs.environment }}" == "development" ]; then
             ENV="development"
           elif [ "${{ github.event.inputs.environment }}" == "staging" ]; then
@@ -60,11 +59,11 @@ jobs:
             ENV="production"
           elif [ "${{ github.ref_type }}" == "tag" ]; then
             ENV="production"
-          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          elif [ "${{ github.ref }}" == "refs/heads/v01" ]; then
             ENV="production"
-          elif [ "${{ github.ref }}" == "refs/heads/staging" ]; then
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
             ENV="staging"
-          elif [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+          elif [ "${{ github.ref }}" == "refs/heads/v02" ] || [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
             ENV="development"
           else
             ENV="development"
