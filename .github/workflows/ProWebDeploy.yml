@@ -68,7 +68,7 @@ jobs:
               echo "environment=production" >> $GITHUB_OUTPUT
               echo "project_name=proweb-prod" >> $GITHUB_OUTPUT
               echo "domain=proweb.leoproti.com.br" >> $GITHUB_OUTPUT
-              echo "port=8013" >> $GITHUB_OUTPUT
+              echo "port=8021" >> $GITHUB_OUTPUT
               echo "spring_profile=prod" >> $GITHUB_OUTPUT
               echo "deploy_tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
               ;;
