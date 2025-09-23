@@ -26,6 +26,12 @@ spring:
     console:
       enabled: ${H2_CONSOLE_ENABLED:true}
       path: /h2-console
+
+# 🔐 Configurações JWT
+jwt:
+  secret: ${JWT_SECRET:ProgramacaoWebSpringBootSecretKeyForJWTTokenGenerationThatNeedsToBeAtLeast256BitsLong}
+  expiration: ${JWT_EXPIRATION:86400000} # 24 horas em milissegundos
+  issuer: ${JWT_ISSUER:ProgramacaoWebSpringBoot}
       
 logging:
   level:
