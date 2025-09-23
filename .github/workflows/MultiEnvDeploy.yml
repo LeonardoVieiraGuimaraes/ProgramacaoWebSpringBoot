@@ -1,0 +1,265 @@
+name: Deploy Spring Boot App - Multi Environment
+
+on:
+  push:
+    branches:
+      - main      # Deploy para produção (v01)
+      - v02       # Deploy para staging (v02)
+    paths-ignore:
+      - 'README.md'
+      - 'comandos.txt'
+      - '**/*.md'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'auto'
+        type: choice
+        options:
+        - auto
+        - production
+        - staging
+
+jobs:
+  build-and-deploy:
+    name: 🏠 Build and Deploy to Home Server
+    runs-on: ubuntu-latest
+    
+    env:
+      SPRING_PROFILES_ACTIVE: prod
+      MAVEN_OPTS: -Xmx2048m
+    
+    steps:
+      - name: 🚚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🎯 Determine deployment environment
+        id: env
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            echo "env=production" >> $GITHUB_OUTPUT
+            echo "project_name=prowebv01" >> $GITHUB_OUTPUT
+            echo "domain=prowebv01.leoproti.com.br" >> $GITHUB_OUTPUT
+            echo "port=8013" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+            echo "env=staging" >> $GITHUB_OUTPUT
+            echo "project_name=prowebv02" >> $GITHUB_OUTPUT
+            echo "domain=prowebv02.leoproti.com.br" >> $GITHUB_OUTPUT
+            echo "port=8014" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "env=production" >> $GITHUB_OUTPUT
+            echo "project_name=prowebv01" >> $GITHUB_OUTPUT
+            echo "domain=prowebv01.leoproti.com.br" >> $GITHUB_OUTPUT
+            echo "port=8013" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/v02" ]; then
+            echo "env=staging" >> $GITHUB_OUTPUT
+            echo "project_name=prowebv02" >> $GITHUB_OUTPUT
+            echo "domain=prowebv02.leoproti.com.br" >> $GITHUB_OUTPUT
+            echo "port=8014" >> $GITHUB_OUTPUT
+          else
+            echo "env=production" >> $GITHUB_OUTPUT
+            echo "project_name=prowebv01" >> $GITHUB_OUTPUT
+            echo "domain=prowebv01.leoproti.com.br" >> $GITHUB_OUTPUT
+            echo "port=8013" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🏷️ Display deployment info
+        run: |
+          echo "🚀 Deploying to: ${{ steps.env.outputs.env }}"
+          echo "📁 Project: ${{ steps.env.outputs.project_name }}"
+          echo "🌐 Domain: ${{ steps.env.outputs.domain }}"
+          echo "🔌 Port: ${{ steps.env.outputs.port }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: 🔧 Make Maven wrapper executable
+        run: chmod +x ./mvnw
+
+      - name: 🧪 Run tests
+        run: ./mvnw clean test
+
+      - name: 🔨 Build Spring Boot application
+        run: ./mvnw clean package -DskipTests
+
+      - name: ☁️ Setup Cloudflare
+        run: |
+          wget -q https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared-linux-amd64.deb
+
+      - name: 🔑 Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.HOME_SERVER_SSH_KEY }}
+
+      - name: 🔐 Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "Host ssh.leoproti.com.br" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+          echo "  ConnectTimeout 30" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+      - name: 📝 Generate docker-compose for environment
+        run: |
+          cat > docker-compose-deploy.yml << EOF
+          version: "3.8"
+          
+          services:
+            app:
+              build:
+                context: .
+                dockerfile: Dockerfile.spring
+              image: ${{ steps.env.outputs.project_name }}-spring-boot-app
+              container_name: ${{ steps.env.outputs.project_name }}-app
+              ports:
+                - "${{ steps.env.outputs.port }}:${{ steps.env.outputs.port }}"
+              environment:
+                - SPRING_PROFILES_ACTIVE=prod
+                - SERVER_PORT=${{ steps.env.outputs.port }}
+                - SERVER_CONTEXT_PATH=/
+                - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/h2db/db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL;WRITE_DELAY=0;LOCK_TIMEOUT=10000
+                - SPRING_DATASOURCE_DRIVER=org.h2.Driver
+                - SPRING_DATASOURCE_USERNAME=sa
+                - SPRING_DATASOURCE_PASSWORD=\${H2_DB_PASSWORD:-defaultpassword}
+                - SPRING_JPA_DIALECT=org.hibernate.dialect.H2Dialect
+                - SPRING_JPA_SHOW_SQL=false
+                - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+                - H2_CONSOLE_ENABLED=false
+                - LOG_LEVEL=INFO
+                - LOG_LEVEL_WEB=WARN
+                - JAVA_OPTS=-Xmx512m -Xms256m -Djava.security.egd=file:/dev/./urandom
+                - TZ=America/Sao_Paulo
+              volumes:
+                - ./h2data:/data/h2db:rw
+              restart: unless-stopped
+              user: "1000:1000"
+              networks:
+                - ${{ steps.env.outputs.project_name }}-network
+              healthcheck:
+                test: ["CMD-SHELL", "curl -f http://localhost:${{ steps.env.outputs.port }}/actuator/health || exit 1"]
+                interval: 30s
+                timeout: 10s
+                retries: 5
+                start_period: 45s
+              depends_on: []
+              logging:
+                driver: "json-file"
+                options:
+                  max-size: "10m"
+                  max-file: "3"
+          
+          networks:
+            ${{ steps.env.outputs.project_name }}-network:
+              driver: bridge
+              name: ${{ steps.env.outputs.project_name }}-network
+          EOF
+
+      - name: 🧹 Clean and prepare server
+        run: |
+          echo "🚀 Preparing ${{ steps.env.outputs.env }} environment..."
+          
+          ssh -o ProxyCommand="cloudflared access ssh --hostname %h" \
+              -o ConnectTimeout=30 \
+              -o StrictHostKeyChecking=no \
+              leonardovieiraxy@ssh.leoproti.com.br << EOF
+            # Parar aplicação se estiver rodando
+            docker stop ${{ steps.env.outputs.project_name }}-app || true
+            docker rm ${{ steps.env.outputs.project_name }}-app || true
+            
+            # Criar pasta do projeto
+            mkdir -p /home/leonardovieiraxy/projetos/${{ steps.env.outputs.project_name }}
+            cd /home/leonardovieiraxy/projetos/${{ steps.env.outputs.project_name }}
+            
+            # Corrigir permissões do diretório h2data
+            echo "🔧 Configurando diretório H2 para ${{ steps.env.outputs.env }}..."
+            if [ -d "./h2data" ]; then
+              sudo rm -rf ./h2data 2>/dev/null || rm -rf ./h2data
+            fi
+            
+            mkdir -p ./h2data
+            chmod 755 ./h2data
+            chown -R leonardovieiraxy:leonardovieiraxy ./h2data 2>/dev/null || true
+            
+            echo "✅ ${{ steps.env.outputs.env }} environment prepared"
+          EOF
+
+      - name: 📤 Transfer project files
+        run: |
+          echo "📤 Transferring files to ${{ steps.env.outputs.env }}..."
+          
+          # Transferir docker-compose customizado
+          rsync -avz \
+                -e "ssh -o ProxyCommand='cloudflared access ssh --hostname %h'" \
+                docker-compose-deploy.yml \
+                leonardovieiraxy@ssh.leoproti.com.br:/home/leonardovieiraxy/projetos/${{ steps.env.outputs.project_name }}/docker-compose.yml
+          
+          # Transferir Dockerfile
+          rsync -avz \
+                -e "ssh -o ProxyCommand='cloudflared access ssh --hostname %h'" \
+                Dockerfile.spring \
+                leonardovieiraxy@ssh.leoproti.com.br:/home/leonardovieiraxy/projetos/${{ steps.env.outputs.project_name }}/
+          
+          # Transferir JAR
+          rsync -avz \
+                -e "ssh -o ProxyCommand='cloudflared access ssh --hostname %h'" \
+                target/ \
+                leonardovieiraxy@ssh.leoproti.com.br:/home/leonardovieiraxy/projetos/${{ steps.env.outputs.project_name }}/target/
+
+      - name: 🚀 Deploy on server
+        run: |
+          ssh -o ProxyCommand="cloudflared access ssh --hostname %h" \
+              leonardovieiraxy@ssh.leoproti.com.br << EOF
+            cd /home/leonardovieiraxy/projetos/${{ steps.env.outputs.project_name }}
+            
+            echo "🚀 Deploying ${{ steps.env.outputs.project_name }} to ${{ steps.env.outputs.env }}..."
+            
+            # Build e start do container
+            docker-compose down --remove-orphans || true
+            docker-compose build --no-cache
+            docker-compose up -d
+            
+            # Aguardar container inicializar
+            echo "⏳ Waiting for container to start..."
+            sleep 30
+            
+            # Verificar se está rodando
+            if docker ps | grep ${{ steps.env.outputs.project_name }}-app; then
+              echo "✅ ${{ steps.env.outputs.project_name }} deployed successfully!"
+              echo "🌐 Available at: https://${{ steps.env.outputs.domain }}"
+              
+              # Testar endpoint
+              echo "🧪 Testing health endpoint..."
+              if docker exec ${{ steps.env.outputs.project_name }}-app curl -f http://localhost:${{ steps.env.outputs.port }}/actuator/health; then
+                echo "✅ Health check passed!"
+              else
+                echo "⚠️  Health check failed, but container is running"
+              fi
+            else
+              echo "❌ Deployment failed!"
+              docker logs ${{ steps.env.outputs.project_name }}-app || true
+              exit 1
+            fi
+          EOF
+
+      - name: 📊 Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ steps.env.outputs.env }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project:** ${{ steps.env.outputs.project_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Domain:** https://${{ steps.env.outputs.domain }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Port:** ${{ steps.env.outputs.port }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [🌐 Application](https://${{ steps.env.outputs.domain }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [❤️ Health Check](https://${{ steps.env.outputs.domain }}/actuator/health)" >> $GITHUB_STEP_SUMMARY
+          echo "- [📊 Products API](https://${{ steps.env.outputs.domain }}/produtos)" >> $GITHUB_STEP_SUMMARY
