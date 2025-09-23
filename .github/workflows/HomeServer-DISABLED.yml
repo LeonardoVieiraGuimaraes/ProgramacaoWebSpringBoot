@@ -1,13 +1,14 @@
-name: Deploy Spring Boot App to Home Server
+name: Deploy Spring Boot App to Home Server (DEPRECATED - Use MultiEnvDeploy.yml)
 
-on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - 'comandos.txt'
-      - '**/*.md'
+# WORKFLOW DESABILITADO - Substituído por MultiEnvDeploy.yml
+# on:
+#   push:
+#     branches:
+#       - main
+#     paths-ignore:
+#       - 'README.md'
+#       - 'comandos.txt'
+#       - '**/*.md'
   workflow_dispatch:
 
 jobs:
