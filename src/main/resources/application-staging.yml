@@ -1,0 +1,62 @@
+# Configuração específica para HOMOLOGAÇÃO/STAGING
+server:
+  port: 8020
+  servlet:
+    context-path: /
+  forward-headers-strategy: framework
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+
+spring:
+  datasource:
+    url: jdbc:h2:file:/data/h2db/staging-db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ${H2_DB_PASSWORD:stagingpassword}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 3
+      idle-timeout: 300000
+      connection-timeout: 20000
+      leak-detection-threshold: 60000
+      
+  jpa:
+    hibernate:
+      ddl-auto: update       # Mantém dados entre deploys
+    show-sql: false         # SQL logs desabilitados
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        
+  h2:
+    console:
+      enabled: false        # Console desabilitado por segurança
+      
+logging:
+  level:
+    '[com.example.deploy]': INFO
+    '[org.springframework.web]': WARN
+    '[org.hibernate.SQL]': WARN
+    root: INFO
+  file:
+    name: /var/log/prowebv01/staging-application.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+    
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env
+  endpoint:
+    health:
+      show-details: when-authorized
+    env:
+      show-values: never
+  health:
+    defaults:
+      enabled: true
