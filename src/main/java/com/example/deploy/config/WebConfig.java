@@ -12,6 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(@NonNull CorsRegistry registry) {
         registry.addMapping("/**")
                 .allowedOrigins(
+                    "http://localhost:8013",           // Dev local V01
                     "http://localhost:8022",           // Dev local
                     "https://staging.proweb.leoproti.com.br:8020",  // Staging
                     "https://proweb.leoproti.com.br:8021"           // Production

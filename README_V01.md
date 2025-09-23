@@ -50,17 +50,17 @@ mvn spring-boot:run -Dspring.profiles.active=dev
 
 | Recurso | URL | Descrição |
 |---------|-----|-----------|
-| **API Principal** | http://localhost:8021 | Página inicial |
-| **Swagger UI** | http://localhost:8021/swagger-ui/index.html | Documentação interativa |
-| **H2 Console** | http://localhost:8021/h2-console | Interface do banco H2 |
-| **Health Check** | http://localhost:8021/actuator/health | Status da aplicação |
-| **Metrics** | http://localhost:8021/actuator/metrics | Métricas da aplicação |
+| **API Principal** | http://localhost:8013 | Página inicial |
+| **Swagger UI** | http://localhost:8013/swagger-ui/index.html | Documentação interativa |
+| **H2 Console** | http://localhost:8013/h2-console | Interface do banco H2 |
+| **Health Check** | http://localhost:8013/actuator/health | Status da aplicação |
+| **Metrics** | http://localhost:8013/actuator/metrics | Métricas da aplicação |
 
 ---
 
 ## 🗄️ **Configuração do Banco H2**
 
-Para acessar o **H2 Console** em http://localhost:8021/h2-console:
+Para acessar o **H2 Console** em http://localhost:8013/h2-console:
 
 ```properties
 JDBC URL: jdbc:h2:mem:testdb
@@ -115,38 +115,38 @@ DELETE /api/produtos/{id}
 ### **Testar Alunos:**
 ```bash
 # Criar aluno
-curl -X POST http://localhost:8021/api/alunos \
+curl -X POST http://localhost:8013/api/alunos \
   -H "Content-Type: application/json" \
   -d '{"nome":"João Silva","email":"joao@exemplo.com","idade":22,"curso":"Engenharia"}'
 
 # Listar alunos
-curl http://localhost:8021/api/alunos
+curl http://localhost:8013/api/alunos
 ```
 
 ### **Testar Produtos:**
 ```bash
 # Criar produto
-curl -X POST http://localhost:8021/api/produtos \
+curl -X POST http://localhost:8013/api/produtos \
   -H "Content-Type: application/json" \
   -d '{"nome":"Notebook","preco":2500.00,"descricao":"Notebook Dell"}'
 
 # Listar produtos
-curl http://localhost:8021/api/produtos
+curl http://localhost:8013/api/produtos
 ```
 
 ---
 
 ## ⚙️ **Configurações**
 
-### **Porta Padrão:** 8021
+### **Porta Padrão:** 8013
 ```yaml
 server:
-  port: 8021
+  port: 8013
 ```
 
 ### **Variáveis de Ambiente:**
 ```bash
-SERVER_PORT=8021                    # Porta do servidor
+SERVER_PORT=8013                    # Porta do servidor
 SPRING_DATASOURCE_URL=...          # URL do banco
 H2_CONSOLE_ENABLED=true             # Habilitar H2 Console
 LOG_LEVEL=INFO                      # Nível de log
@@ -174,7 +174,7 @@ mvn spring-boot:run
 
 | Recurso | V01 | V02 |
 |---------|-----|-----|
-| **Porta Padrão** | 8021 | 8080 |
+| **Porta Padrão** | 8013 | 8080 |
 | **Autenticação** | ❌ Não | ✅ JWT |
 | **Usuários** | ❌ Não | ✅ Sim |
 | **Roles** | ❌ Não | ✅ ADMIN/MANAGER/USER |
@@ -193,9 +193,9 @@ services:
   spring-v01:
     build: .
     ports:
-      - "8021:8021"
+      - "8013:8013"
     environment:
-      - SERVER_PORT=8021
+      - SERVER_PORT=8013
       - SPRING_PROFILES_ACTIVE=dev
 ```
 
