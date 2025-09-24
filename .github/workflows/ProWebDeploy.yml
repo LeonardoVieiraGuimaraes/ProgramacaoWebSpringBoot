@@ -85,7 +85,7 @@ jobs:
               ;;
             "dev")
               echo "environment=dev" >> $GITHUB_OUTPUT
-              echo "project_name=proweb-dev" >> $GITHUB_OUTPUT
+              echo "project_name=proweb-v01" >> $GITHUB_OUTPUT
               echo "domain=dev.proweb.leoproti.com.br" >> $GITHUB_OUTPUT
               echo "port=8013" >> $GITHUB_OUTPUT
               echo "spring_profile=dev" >> $GITHUB_OUTPUT
