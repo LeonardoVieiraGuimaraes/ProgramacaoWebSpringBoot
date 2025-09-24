@@ -50,5 +50,5 @@ logging:
     console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: /var/log/prowebv01/application.log
-    max-size: 10MB
-    max-history: 30
+  logback.rollingpolicy.max-history: 30
+  logback.rollingpolicy.max-file-size: 10MB
