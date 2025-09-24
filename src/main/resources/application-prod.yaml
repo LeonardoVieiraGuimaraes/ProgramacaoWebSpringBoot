@@ -1,6 +1,6 @@
 # Configuração específica para produção - prowebv01.leoproti.com.br
 server:
-  port: 8013
+  port: 8021
   servlet:
     context-path: /
   forward-headers-strategy: framework

@@ -2,7 +2,6 @@ package com.example.deploy.controller;
 
 import java.util.List;
 
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.deploy.model.Produto;
 import com.example.deploy.service.ProdutoService;
 
-@CrossOrigin(origins = "*") // Permite qualquer domínio externo
 @RestController
 @RequestMapping("/produtos")
 public class ProdutoController {

@@ -1,220 +1,246 @@
-# ProWebV01 - Spring Boot CRUD Completo
+# 🚀 ProWeb - Sistema Spring Boot
 
-Este projeto foi desenvolvido para fins didáticos nas disciplinas de Programação Web e Arquitetura de Aplicações Web, demonstrando a construção de APIs REST e aplicações web completas com Spring Boot, integração com banco de dados, documentação automática e deploy automatizado.
+Sistema web desenvolvido em Spring Boot com controle de versões profissional e deploy automático multi-ambiente.
 
-**Homeserver configurado para:** `prowebv01.leoproti.com.br`
+## 🏗️ **Arquitetura de Ambientes**
 
----
+| Branch | Ambiente | Execução | URL | Porta | Profile |
+|--------|----------|----------|-----|-------|---------|
+| `v02` | **Desenvolvimento** | Local | `localhost:8022` | 8022 | `dev` |
+| `staging` | **Homologação** | Deploy Automático | `staging.proweb.leoproti.com.br` | 8020 | `staging` |
+| `main` | **Produção** | Deploy Automático | `proweb.leoproti.com.br` | 8021 | `prod` |
 
-## Funcionalidades
+## � **GitFlow - Fluxo de Trabalho**
 
-- **Hello World:**  
-  Primeira rota criada para testar o funcionamento do projeto e do Spring Boot.
-- **CRUD de Produtos:**  
-  API REST e interface web (Thymeleaf) para cadastro, listagem, edição e exclusão de produtos (nome, preço).
-- **CRUD de Alunos:**  
-  API REST e interface web (Thymeleaf) para cadastro, listagem, edição e exclusão de alunos (nome, turma, curso, matrícula).
-- **Documentação Swagger/OpenAPI:**  
-  Interface automática para explorar e testar os endpoints REST.
-- **Deploy automatizado:**  
-  Pipeline GitHub Actions para build e deploy contínuo no servidor remoto.
-- **Banco de dados:**  
-  H2 em memória para desenvolvimento e H2 em arquivo para produção (via Docker).
-- **CORS configurado:**  
-  Suporte para acesso do domínio `prowebv01.leoproti.com.br`.
-
-## Deploy e Configuração do Homeserver
-
-### Configuração Atual
-- **Domínio:** prowebv01.leoproti.com.br
-- **Porta:** 8013
-- **Perfil:** Produção
-- **Banco:** H2 (arquivo persistente)
-- **Deploy:** GitHub Actions automatizado
-
-### Scripts de Verificação
-
-#### Verificação de Permissões H2 (Recomendado antes do deploy):
-
-**Windows PowerShell:**
-```powershell
-.\check-h2-permissions.ps1
+```
+💻 DESENVOLVIMENTO (v02)  ←─── Execução local → localhost:8022
+           ↓ merge
+🧪 STAGING (staging)      ←─── Deploy automático → staging.proweb.leoproti.com.br:8020
+           ↓ merge + tag
+🏭 PRODUÇÃO (main)        ←─── Deploy automático → proweb.leoproti.com.br:8021
 ```
 
-**Linux/macOS:**
+### **📋 Processo de Desenvolvimento**
+
+#### 1. **Desenvolvimento Local (v02)**
 ```bash
-chmod +x check-h2-permissions.sh
-./check-h2-permissions.sh
+# Mudar para branch de desenvolvimento
+git checkout v02
+git pull origin v02
+
+# Executar localmente
+mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8022 --spring.profiles.active=dev"
+
+# Acessar aplicação
+# 🌐 http://localhost:8022
+# 🔧 http://localhost:8022/h2-console
 ```
 
-### Deploy Manual:
+#### 2. **Deploy para Staging**
 ```bash
-# Parar containers existentes
-docker compose down
+# Commit suas alterações
+git add .
+git commit -m "feat: nova funcionalidade"
+git push origin v02
 
-# Construir e iniciar
-docker compose up --build -d
-
-# Verificar status
-docker compose ps
-
-# Acompanhar logs
-docker compose logs -f app
+# Promover para staging
+git checkout staging
+git merge v02
+git push origin staging  # 🚀 Deploy automático executado
 ```
 
-### Troubleshooting H2
-Para problemas com o banco de dados H2 (AccessDeniedException, container reiniciando), consulte:
-- **[TROUBLESHOOTING-H2.md](./TROUBLESHOOTING-H2.md)** - Guia completo de solução de problemas
+#### 3. **Deploy para Produção**
+```bash
+# Promover staging para produção
+git checkout main
+git merge staging
+git tag v1.2.3
+git push origin main --tags  # 🚀 Deploy automático executado
+```
 
-### GitHub Actions Deploy
-O deploy é automatizado via GitHub Actions:
-- **Trigger:** Push na branch `main`
-- **Pipeline:** Build → Deploy → Verificação automática
-- **Correções:** Permissões H2 corrigidas automaticamente
-- **Logs:** Disponíveis na aba Actions do GitHub
+## �️ **Desenvolvimento Local**
 
-### Configurações de Produção
-- Console H2 desabilitado por segurança
-- Logs estruturados com rotação automática
-- Health checks configurados
-- CORS restritivo para domínio específico
-- Usuário container com UID 1000 para compatibilidade
-- Volume H2 com permissões específicas (755)
+### **Configurações por Ambiente**
+
+#### 🔧 **Desenvolvimento (port 8022)**
+- Profile: `dev`
+- Banco: H2 file (`./h2data/devdb`)
+- Console H2: habilitado
+- Logs: DEBUG
+- Hot reload: habilitado
+
+#### 🧪 **Staging (port 8020)**
+- Profile: `staging`
+- Banco: H2 file (`./h2data/stagingdb`)
+- Console H2: habilitado (apenas staging)
+- Logs: INFO
+- Validação completa
+
+#### 🏭 **Produção (port 8021)**
+- Profile: `prod`
+- Banco: H2 file (`./h2data/proddb`)
+- Console H2: **desabilitado**
+- Logs: WARN
+- Otimizações de performance
+
+### **Comandos Essenciais**
+
+```bash
+# Compilar projeto
+mvn clean package -DskipTests
+
+# Executar desenvolvimento
+mvn spring-boot:run -Dspring-boot.run.arguments="--server.port=8022 --spring.profiles.active=dev"
+
+# Executar testes
+mvn test
+
+# Gerar JAR
+mvn clean package
+```
+
+## 🚀 **Deploy Automático**
+
+### **GitHub Actions Workflow**
+
+O deploy é automatizado via GitHub Actions (`ProWebDeploy.yml`):
+
+- **Staging**: Deploy automático ao fazer push para `staging`
+- **Produção**: Deploy automático ao fazer push para `main`
+
+### **Processo de Deploy**
+
+1. **Build**: Compilação do projeto Maven
+2. **Test**: Execução de testes automatizados
+3. **Package**: Geração do JAR
+4. **Deploy**: Upload e execução no servidor
+5. **Health Check**: Verificação da aplicação
+
+## 📊 **Monitoramento**
+
+### **Health Checks**
+
+```bash
+# Desenvolvimento
+curl http://localhost:8022/actuator/health
+
+# Staging
+curl https://staging.proweb.leoproti.com.br:8020/actuator/health
+
+# Produção
+curl https://proweb.leoproti.com.br:8021/actuator/health
+```
+
+### **APIs Disponíveis**
+
+```bash
+# Produtos
+curl http://localhost:8022/produtos
+curl https://staging.proweb.leoproti.com.br:8020/produtos
+curl https://proweb.leoproti.com.br:8021/produtos
+
+# Alunos
+curl http://localhost:8022/alunos
+curl https://staging.proweb.leoproti.com.br:8020/alunos
+curl https://proweb.leoproti.com.br:8021/alunos
+```
+
+## 🛠️ **Tecnologias**
+
+- **Spring Boot 3.4.5** - Framework principal
+- **Java 21** - Runtime
+- **H2 Database** - Banco de dados
+- **Maven** - Gerenciador de dependências
+- **Docker** - Containerização
+- **GitHub Actions** - CI/CD
+- **Cloudflare** - Proxy HTTPS
+
+## 📁 **Estrutura do Projeto**
+
+```
+src/
+├── main/
+│   ├── java/com/example/deploy/
+│   │   ├── controller/     # Controllers REST/MVC
+│   │   ├── model/          # Entidades JPA
+│   │   ├── repository/     # Repositórios Spring Data
+│   │   ├── service/        # Lógica de negócio
+│   │   └── config/         # Configurações
+│   └── resources/
+│       ├── application.yaml          # Config base
+│       ├── application-dev.yaml      # Config desenvolvimento
+│       ├── application-staging.yml   # Config staging
+│       ├── application-prod.yaml     # Config produção
+│       └── templates/                # Templates Thymeleaf
+└── test/                             # Testes automatizados
+```
+
+## ⚠️ **Troubleshooting**
+
+### **Problemas Comuns**
+
+#### **Porta em uso**
+```bash
+# Windows
+netstat -ano | findstr :8022
+taskkill /PID <PID> /F
+
+# Linux/macOS
+lsof -ti:8022 | xargs kill
+```
+
+#### **Banco H2 travado**
+1. Parar aplicação
+2. Remover arquivo `h2data/*.db`
+3. Reiniciar aplicação
+
+#### **Deploy falhou**
+1. Verificar logs no GitHub Actions
+2. Verificar conectividade SSH
+3. Verificar espaço em disco no servidor
+
+### **Logs de Debug**
+
+```bash
+# Habilitar logs detalhados
+mvn spring-boot:run -Dspring-boot.run.arguments="--logging.level.com.example.deploy=DEBUG"
+```
+
+## 🔐 **Segurança**
+
+- **CORS** configurado para domínios permitidos
+- **Headers de segurança** habilitados
+- **Console H2** desabilitado em produção
+- **HTTPS** obrigatório via Cloudflare
+
+## 📝 **Changelog**
+
+### **v2.0.0** (Atual)
+- ✅ Controle de versões GitFlow
+- ✅ Deploy automático multi-ambiente
+- ✅ Configuração por profiles
+- ✅ Monitoramento com Actuator
+- ✅ CI/CD completo
 
 ---
 
-## Estrutura do Projeto
+**🚀 Sistema pronto para desenvolvimento profissional!**
+- **GitHub Actions**
+- **Cloudflare**
 
-- **/src/main/java/com/example/deploy/controller**  
-  Controllers REST e web (Thymeleaf) para Produtos e Alunos.
-- **/src/main/java/com/example/deploy/model**  
-  Entidades JPA: Produto e Aluno.
-- **/src/main/java/com/example/deploy/repository**  
-  Repositórios JPA para Produto e Aluno.
-- **/src/main/java/com/example/deploy/service**  
-  Serviços de negócio para Produto e Aluno.
-- **/src/main/resources/templates/**  
-  Views Thymeleaf para Produtos e Alunos.
-- **/src/main/resources/static/**  
-  Frontend HTML/JS para consumir a API REST.
-- **/src/main/resources/application.yaml**  
-  Configuração padrão para desenvolvimento (H2).
-- **/docker-compose.yml**  
-  Orquestração dos containers Spring Boot e MariaDB para produção.
-- **/Dockerfile.spring**  
-  Build da imagem da aplicação Spring Boot.
-- **/Dockerfile.mysql**  
-  Build da imagem do banco MariaDB.
-- **/.github/workflows/deploy.yml**  
-  Pipeline de CI/CD para build e deploy automático.
+## 📊 **APIs Disponíveis**
+
+- `/produtos` - CRUD de produtos
+- `/alunos` - CRUD de alunos
+- `/actuator/health` - Health check
+- `/h2-console` - Console H2 (apenas desenvolvimento)
+
+## 🎯 **Fluxo de Trabalho**
+
+1. **Desenvolva** em `v02` localmente
+2. **Teste** em `staging` (deploy automático)
+3. **Publique** em `main` (produção - deploy automático)
 
 ---
 
-## Dependências Utilizadas
-
-- **Spring Boot Starter Web**  
-  Para criação de APIs REST e controllers web.
-- **Spring Boot Starter Data JPA**  
-  Integração com bancos de dados relacionais via JPA/Hibernate.
-- **Spring Boot Starter Thymeleaf**  
-  Renderização de páginas HTML dinâmicas.
-- **Spring Boot DevTools**  
-  Hot reload para desenvolvimento.
-- **MariaDB Java Client**  
-  Driver JDBC para conexão com MariaDB.
-- **H2 Database**  
-  Banco de dados em memória para desenvolvimento e testes.
-- **Spring Boot Starter Test**  
-  Dependências para testes automatizados.
-- **SpringDoc OpenAPI Starter WebMVC UI**  
-  Geração automática da documentação Swagger/OpenAPI.
-- **Maven Compiler Plugin**  
-  Compilação do projeto com suporte ao Java 24.
-- **Spring Boot Maven Plugin**  
-  Empacotamento e execução da aplicação Spring Boot.
-
----
-
-## Como Executar
-
-### Desenvolvimento Local (H2)
-
-1. Clone o repositório.
-2. Execute `mvn clean install` para compilar.
-3. Rode a aplicação com `mvn spring-boot:run`.
-4. Acesse:
-   - API REST: `http://localhost:8080/produtos` e `http://localhost:8080/alunos`
-   - Interface web: `http://localhost:8080/produtos-view` e `http://localhost:8080/alunos-view`
-   - Swagger: `http://localhost:8080/swagger-ui.html` ou `/swagger-ui/index.html`
-   - Health check: `http://localhost:8080/actuator/health`
-
-### Produção (H2 persistente via Docker)
-
-1. **Verificar permissões primeiro** (recomendado):
-   ```bash
-   # Windows
-   .\check-h2-permissions.ps1
-   
-   # Linux/Mac
-   ./check-h2-permissions.sh
-   ```
-
-2. **Deploy:**
-   ```bash
-   docker compose up -d --build
-   ```
-
-3. **Verificar aplicação:**
-   - Aplicação: `http://prowebv01.leoproti.com.br:8013`
-   - Health check: `http://prowebv01.leoproti.com.br:8013/actuator/health`
-   - API REST: `http://prowebv01.leoproti.com.br:8013/produtos`
-
-4. **Monitoramento:**
-   ```bash
-   # Status do container
-   docker compose ps
-   
-   # Logs em tempo real
-   docker compose logs -f app
-   
-   # Verificar saúde da aplicação
-   curl http://localhost:8013/actuator/health
-   ```
-
----
-
-## Fluxo de Deploy Automatizado
-
-- O deploy é feito via GitHub Actions:
-  - Ao fazer push na branch `main`, o workflow executa o build, copia os arquivos para o servidor e executa o `docker compose up -d --build`.
-  - O banco MariaDB é iniciado antes da aplicação.
-  - O deploy é totalmente automatizado, facilitando a entrega contínua.
-
----
-
-## Histórico do Projeto
-
-- **Início:**  
-  Projeto começou com um simples endpoint Hello World para validar o ambiente Spring Boot.
-- **CRUD de Produtos:**  
-  Implementação completa de cadastro, listagem, edição e exclusão de produtos, com API REST e interface web.
-- **CRUD de Alunos:**  
-  Expansão do projeto para incluir gerenciamento de alunos, com todos os atributos necessários.
-- **Documentação e Deploy:**  
-  Adição do Swagger/OpenAPI e automação do deploy com Docker e GitHub Actions.
-
----
-
-## Observações
-
-- O projeto está pronto para ser usado como base para estudos, testes e demonstrações em sala de aula.
-- Para produção, recomenda-se ajustar as configurações de CORS e variáveis sensíveis conforme o ambiente.
-
----
-
-## Contato
-
-Desenvolvido por Leonardo Vieira Guimarães  
-Para dúvidas ou sugestões, entre em contato pelo GitHub.
-
----
+**ProWeb** - Sistema profissional com DevOps automatizado 🚀
