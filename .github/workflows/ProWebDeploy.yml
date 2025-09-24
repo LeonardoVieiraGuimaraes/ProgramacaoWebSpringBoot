@@ -163,9 +163,8 @@ jobs:
       - name: 🔐 Configure SSH
         run: |
           mkdir -p ~/.ssh
-          echo "Host ssh.leoproti.com.br" >> ~/.ssh/config
-          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-          echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+          echo "${{ secrets.HOME_SERVER_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          echo "Host ssh.leoproti.com.br" > ~/.ssh/config
           echo "  ConnectTimeout 30" >> ~/.ssh/config
           chmod 600 ~/.ssh/config
 
