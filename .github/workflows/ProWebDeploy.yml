@@ -188,6 +188,17 @@ jobs:
         run: |
           echo "🚀 Preparing ${{ needs.determine-environment.outputs.environment }} environment..."
           
+            # Liberar porta 8013 se estiver ocupada (apenas para ambiente dev/v01)
+            if [ "${{ needs.determine-environment.outputs.port }}" == "8013" ]; then
+              echo "🔎 Verificando containers na porta 8013..."
+              CONTAINER_ID=$(docker ps --filter "publish=8013" --format "{{.ID}}")
+              if [ ! -z "$CONTAINER_ID" ]; then
+                echo "⏹️ Parando container $CONTAINER_ID que está usando a porta 8013..."
+                docker stop $CONTAINER_ID || true
+                docker rm $CONTAINER_ID || true
+              fi
+            fi
+
           ssh -o ProxyCommand="cloudflared access ssh --hostname %h" \
               -o ConnectTimeout=30 \
               -o StrictHostKeyChecking=no \
