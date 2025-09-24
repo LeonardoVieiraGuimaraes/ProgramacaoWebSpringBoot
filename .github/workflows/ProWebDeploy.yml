@@ -5,7 +5,7 @@ on:
     branches:
         - main        # Produção (proweb.leoproti.com.br)
         - staging     # Homologação (staging.proweb.leoproti.com.br)
-        - v01         # Desenvolvimento (deploy automático na branch v01)
+        - v01      # Desenvolvimento (deploy automático na branch v01)
     paths-ignore:
       - 'README.md'
       - '**/*.md'
@@ -59,6 +59,8 @@ jobs:
             ENV="production"
           elif [ "${{ github.ref }}" == "refs/heads/staging" ]; then
             ENV="staging"
+          elif [ "${{ github.ref }}" == "refs/heads/v01" ]; then
+            ENV="dev"
           else
             ENV="staging"
           fi
@@ -80,6 +82,14 @@ jobs:
               echo "port=8020" >> $GITHUB_OUTPUT
               echo "spring_profile=staging" >> $GITHUB_OUTPUT
               echo "deploy_tag=staging-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+              ;;
+            "dev")
+              echo "environment=dev" >> $GITHUB_OUTPUT
+              echo "project_name=proweb-dev" >> $GITHUB_OUTPUT
+              echo "domain=dev.proweb.leoproti.com.br" >> $GITHUB_OUTPUT
+              echo "port=8013" >> $GITHUB_OUTPUT
+              echo "spring_profile=dev" >> $GITHUB_OUTPUT
+              echo "deploy_tag=dev-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
               ;;
           esac
 
