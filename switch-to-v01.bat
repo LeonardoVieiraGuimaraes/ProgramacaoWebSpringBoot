@@ -2,8 +2,8 @@
 echo 🔄 Alternando para V01 e executando...
 echo.
 
-echo 📂 Mudando para branch v01-branch...
-git checkout v01-branch
+echo 📂 Mudando para branch v01...
+git checkout v01
 
 echo.
 echo 🚀 Iniciando Spring Boot V01 - Versão Simples

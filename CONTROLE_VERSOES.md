@@ -8,10 +8,10 @@ Este projeto agora possui um **sistema completo de controle de versões** com di
 
 ```
 📦 ProgramacaoWebSpringBoot
-├── 🌟 main        (Base do projeto)
-├── 🔧 staging     (Ambiente de testes)
-├── 🔒 v02         (Versão com Autenticação JWT)
-└── 🆓 v01-branch  (Versão Simples sem Autenticação)
+├── 🌟 main      (Base do projeto)
+├── 🔧 staging   (Ambiente de testes)
+├── 🔒 v02       (Versão com Autenticação JWT)
+└── 🆓 v01       (Versão Simples sem Autenticação)
 ```
 
 ---
@@ -35,7 +35,7 @@ Este projeto agora possui um **sistema completo de controle de versões** com di
 
 ### **➡️ Para V01 (Simples)**
 ```bash
-git checkout v01-branch
+git checkout v01
 ./run-v01.bat
 
 # URLs V01:
@@ -74,7 +74,7 @@ git status
 ### **🔄 Navegação**
 ```bash
 # Alternar para V01
-git checkout v01-branch
+git checkout v01
 
 # Alternar para V02
 git checkout v02
@@ -83,7 +83,7 @@ git checkout v02
 git checkout main
 
 # Ver diferenças entre branches
-git diff v01-branch v02
+git diff v01 v02
 ```
 
 ### **💾 Backup e Segurança**
@@ -95,7 +95,7 @@ git tag backup-$(date +%Y%m%d)
 git checkout -b nova-feature
 
 # Fazer merge de features
-git checkout v01-branch
+git checkout v01
 git merge nova-feature
 ```
 
@@ -161,7 +161,7 @@ git merge nova-feature
 ```bash
 # V01
 # Versão Simples (V01)
-git checkout v01-branch && mvn spring-boot:run
+git checkout v01 && mvn spring-boot:run
 
 # V02  
 git checkout v02 && mvn spring-boot:run
