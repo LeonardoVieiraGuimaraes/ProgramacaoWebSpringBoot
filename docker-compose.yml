@@ -5,34 +5,34 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.spring
-    image: prowebv01-spring-boot-app
-    container_name: prowebv01-app
+    image: proweb-staging-app
+    container_name: proweb-staging-app
     ports:
-      - "${SERVER_PORT:-8013}:${SERVER_PORT:-8013}"
+      - "${SERVER_PORT:-8020}:${SERVER_PORT:-8020}"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SERVER_PORT=${SERVER_PORT:-8013}
+      - SPRING_PROFILES_ACTIVE=staging
+      - SERVER_PORT=${SERVER_PORT:-8020}
       - SERVER_CONTEXT_PATH=/
-      - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/h2db/db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL;WRITE_DELAY=0;LOCK_TIMEOUT=10000
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/h2db/staging-db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL;WRITE_DELAY=0;LOCK_TIMEOUT=10000
       - SPRING_DATASOURCE_DRIVER=org.h2.Driver
       - SPRING_DATASOURCE_USERNAME=sa
-      - SPRING_DATASOURCE_PASSWORD=${H2_DB_PASSWORD:-defaultpassword}
+      - SPRING_DATASOURCE_PASSWORD=${H2_DB_PASSWORD:-stagingpassword}
       - SPRING_JPA_DIALECT=org.hibernate.dialect.H2Dialect
-      - SPRING_JPA_SHOW_SQL=false
+      - SPRING_JPA_SHOW_SQL=true
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-      - H2_CONSOLE_ENABLED=false
-      - LOG_LEVEL=INFO
-      - LOG_LEVEL_WEB=WARN
+      - H2_CONSOLE_ENABLED=true
+      - LOG_LEVEL=DEBUG
+      - LOG_LEVEL_WEB=DEBUG
       - JAVA_OPTS=-Xmx512m -Xms256m -Djava.security.egd=file:/dev/./urandom
       - TZ=America/Sao_Paulo
     volumes:
-      - ./h2data:/data/h2db:rw
+      - ./h2data/staging:/data/h2db:rw
     restart: unless-stopped
     user: "1000:1000"
     networks:
-      - prowebv01-network
+      - proweb-staging-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:${SERVER_PORT:-8013}/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:${SERVER_PORT:-8020}/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -45,9 +45,9 @@ services:
         max-file: "3"
 
 networks:
-  prowebv01-network:
+  proweb-staging-network:
     driver: bridge
-    name: prowebv01-network
+    name: proweb-staging-network
 
 volumes:
   h2data:
