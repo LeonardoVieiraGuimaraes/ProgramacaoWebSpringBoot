@@ -158,63 +158,16 @@ jobs:
           echo "  ConnectTimeout 30" >> ~/.ssh/config
           chmod 600 ~/.ssh/config
 
-      - name: 📝 Generate docker-compose for environment
+      - name: 📝 Select docker-compose file for environment
         run: |
-          cat > docker-compose-deploy.yml << EOF
-          version: "3.8"
-          
-          services:
-            app:
-              build:
-                context: .
-                dockerfile: Dockerfile.spring
-              image: ${{ needs.determine-environment.outputs.project_name }}-app
-              container_name: ${{ needs.determine-environment.outputs.project_name }}-app
-              ports:
-                - "${{ needs.determine-environment.outputs.port }}:${{ needs.determine-environment.outputs.port }}"
-              environment:
-                - SPRING_PROFILES_ACTIVE=${{ needs.determine-environment.outputs.spring_profile }}
-                - SERVER_PORT=${{ needs.determine-environment.outputs.port }}
-                - SERVER_CONTEXT_PATH=/
-                - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/h2db/${{ needs.determine-environment.outputs.environment }}-db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL
-                - SPRING_DATASOURCE_DRIVER=org.h2.Driver
-                - SPRING_DATASOURCE_USERNAME=sa
-                - SPRING_DATASOURCE_PASSWORD=\${H2_DB_PASSWORD:-${{ needs.determine-environment.outputs.environment }}password}
-                - SPRING_JPA_DIALECT=org.hibernate.dialect.H2Dialect
-                - SPRING_JPA_SHOW_SQL=false
-                - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-                - H2_CONSOLE_ENABLED=false
-                - LOG_LEVEL=INFO
-                - LOG_LEVEL_WEB=WARN
-                - JAVA_OPTS=-Xmx512m -Xms256m -Djava.security.egd=file:/dev/./urandom
-                - TZ=America/Sao_Paulo
-                - GIT_COMMIT=${{ github.sha }}
-                - DEPLOY_TAG=${{ needs.determine-environment.outputs.deploy_tag }}
-                - ENVIRONMENT=${{ needs.determine-environment.outputs.environment }}
-              volumes:
-                - ./h2data:/data/h2db:rw
-              restart: unless-stopped
-              user: "1000:1000"
-              networks:
-                - ${{ needs.determine-environment.outputs.project_name }}-network
-              healthcheck:
-                test: ["CMD-SHELL", "curl -f http://localhost:${{ needs.determine-environment.outputs.port }}/actuator/health || exit 1"]
-                interval: 30s
-                timeout: 10s
-                retries: 5
-                start_period: 45s
-              depends_on: []
-              logging:
-                driver: "json-file"
-                options:
-                  max-size: "10m"
-                  max-file: "3"
-          
-          networks:
-            ${{ needs.determine-environment.outputs.project_name }}-network:
-              driver: bridge
-              name: ${{ needs.determine-environment.outputs.project_name }}-network
-          EOF
+          # Determinar qual arquivo docker-compose usar baseado no environment
+          if [ "${{ needs.determine-environment.outputs.environment }}" == "staging" ]; then
+            echo "DOCKER_COMPOSE_FILE=docker-compose-staging.yml" >> $GITHUB_ENV
+            echo "🟡 Using docker-compose-staging.yml for staging environment"
+          else
+            echo "DOCKER_COMPOSE_FILE=docker-compose.yml" >> $GITHUB_ENV
+            echo "🟢 Using docker-compose.yml for ${{ needs.determine-environment.outputs.environment }} environment"
+          fi
 
       - name: 🧹 Clean and prepare server
         run: |
@@ -248,11 +201,12 @@ jobs:
       - name: 📤 Transfer project files
         run: |
           echo "📤 Transferring files to ${{ needs.determine-environment.outputs.environment }}..."
+          echo "🔧 Using compose file: $DOCKER_COMPOSE_FILE"
           
-          # Transferir docker-compose customizado
+          # Transferir o arquivo docker-compose específico do ambiente
           rsync -avz \
                 -e "ssh -o ProxyCommand='cloudflared access ssh --hostname %h'" \
-                docker-compose-deploy.yml \
+                $DOCKER_COMPOSE_FILE \
                 leonardovieiraxy@ssh.leoproti.com.br:/home/leonardovieiraxy/projetos/${{ needs.determine-environment.outputs.project_name }}/docker-compose.yml
           
           # Transferir Dockerfile

@@ -1,54 +1,63 @@
 version: "3.8"
 
+networks:
+  dev-network:
+    name: proweb-dev-network
+    driver: bridge
+
+volumes:
+  dev-h2-data:
+    driver: local
+
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile.spring
-    image: proweb-staging-app
-    container_name: proweb-staging-app
+    image: proweb-dev-app
+    container_name: proweb-dev-app
     ports:
-      - "${SERVER_PORT:-8020}:${SERVER_PORT:-8020}"
+      - "8013:8013"
     environment:
-      - SPRING_PROFILES_ACTIVE=staging
-      - SERVER_PORT=${SERVER_PORT:-8020}
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8013
       - SERVER_CONTEXT_PATH=/
-      - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/h2db/staging-db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL;WRITE_DELAY=0;LOCK_TIMEOUT=10000
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/h2db/dev-db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL;WRITE_DELAY=0;LOCK_TIMEOUT=10000
       - SPRING_DATASOURCE_DRIVER=org.h2.Driver
       - SPRING_DATASOURCE_USERNAME=sa
-      - SPRING_DATASOURCE_PASSWORD=${H2_DB_PASSWORD:-stagingpassword}
+      - SPRING_DATASOURCE_PASSWORD=${H2_DB_PASSWORD:-devpassword}
       - SPRING_JPA_DIALECT=org.hibernate.dialect.H2Dialect
-      - SPRING_JPA_SHOW_SQL=true
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-      - H2_CONSOLE_ENABLED=true
-      - LOG_LEVEL=DEBUG
-      - LOG_LEVEL_WEB=DEBUG
-      - JAVA_OPTS=-Xmx512m -Xms256m -Djava.security.egd=file:/dev/./urandom
+      - SPRING_H2_CONSOLE_ENABLED=true
+      - LOGGING_LEVEL_ROOT=INFO
+      - LOGGING_LEVEL_COM_EXAMPLE_DEPLOY=DEBUG
+      - JAVA_OPTS=-Xmx512m -Xms256m -Djava.awt.headless=true
       - TZ=America/Sao_Paulo
     volumes:
-      - ./h2data/staging:/data/h2db:rw
-    restart: unless-stopped
-    user: "1000:1000"
+      - dev-h2-data:/data/h2db
+      - ./logs:/app/logs
     networks:
-      - proweb-staging-network
+      - dev-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:${SERVER_PORT:-8020}/actuator/health || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:8013/actuator/health", "||", "exit", "1"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 45s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
     depends_on: []
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
-networks:
-  proweb-staging-network:
-    driver: bridge
-    name: proweb-staging-network
-
-volumes:
-  h2data:
-    driver: local
+  # Banco de dados standalone para desenvolvimento (opcional)
+  h2-console:
+    image: oscarfonts/h2:2.1.214
+    container_name: proweb-h2-console
+    ports:
+      - "8082:1521"
+      - "8081:8082"
+    environment:
+      - H2_OPTIONS=-ifNotExists
+    volumes:
+      - dev-h2-data:/opt/h2-data
+    networks:
+      - dev-network
+    profiles:
+      - h2-standalone

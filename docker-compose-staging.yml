@@ -1,0 +1,80 @@
+version: "3.8"
+
+networks:
+  staging-network:
+    name: proweb-staging-network
+    driver: bridge
+
+volumes:
+  staging-h2-data:
+    driver: local
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.spring
+    image: proweb-staging-app
+    container_name: proweb-staging-app
+    ports:
+      - "8020:8020"
+    environment:
+      - SPRING_PROFILES_ACTIVE=staging
+      - SERVER_PORT=8020
+      - SERVER_CONTEXT_PATH=/
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/h2db/staging-db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL;WRITE_DELAY=0;LOCK_TIMEOUT=10000
+      - SPRING_DATASOURCE_DRIVER=org.h2.Driver
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=${H2_DB_PASSWORD:-stagingpassword}
+      - SPRING_JPA_DIALECT=org.hibernate.dialect.H2Dialect
+      - SPRING_H2_CONSOLE_ENABLED=false
+      - LOGGING_LEVEL_ROOT=INFO
+      - LOGGING_LEVEL_COM_EXAMPLE_DEPLOY=DEBUG
+    volumes:
+      - staging-h2-data:/data/h2db
+      - /app/logs:/app/logs
+    networks:
+      - staging-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8020/actuator/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    depends_on: []
+
+  # Proxy reverso para staging (opcional)
+  nginx-staging:
+    image: nginx:alpine
+    container_name: proweb-nginx-staging
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NGINX_SERVER_NAME=staging.example.com
+      - UPSTREAM_HOST=app
+      - UPSTREAM_PORT=8020
+    volumes:
+      - ./nginx/staging.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    networks:
+      - staging-network
+    depends_on:
+      - app
+    restart: unless-stopped
+    profiles:
+      - nginx-staging
