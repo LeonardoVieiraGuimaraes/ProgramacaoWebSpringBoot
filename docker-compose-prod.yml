@@ -1,0 +1,74 @@
+version: "3.8"
+
+networks:
+  prod-network:
+    name: proweb-prod-network
+    driver: bridge
+
+volumes:
+  prod-h2-data:
+    driver: local
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.spring
+    image: proweb-prod-app
+    container_name: proweb-prod-app
+    ports:
+      - "8021:8021"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=8021
+      - SERVER_CONTEXT_PATH=/
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/data/h2db/prod-db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=MYSQL;WRITE_DELAY=0;LOCK_TIMEOUT=10000
+      - SPRING_DATASOURCE_DRIVER=org.h2.Driver
+      - SPRING_DATASOURCE_USERNAME=sa
+      - SPRING_DATASOURCE_PASSWORD=${H2_DB_PASSWORD:-prodpassword}
+      - SPRING_JPA_DIALECT=org.hibernate.dialect.H2Dialect
+      - SPRING_H2_CONSOLE_ENABLED=false
+      - LOGGING_LEVEL_ROOT=INFO
+      - LOGGING_LEVEL_COM_EXAMPLE_DEPLOY=INFO
+      - JAVA_OPTS=-Xmx1024m -Xms512m -Djava.awt.headless=true
+      - TZ=America/Sao_Paulo
+    volumes:
+      - prod-h2-data:/data/h2db
+      - ./logs:/app/logs
+    networks:
+      - prod-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8021/actuator/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    depends_on: []
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Proxy reverso para produção (opcional)
+  nginx-prod:
+    image: nginx:alpine
+    container_name: proweb-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NGINX_SERVER_NAME=proweb.leoproti.com.br
+      - UPSTREAM_HOST=app
+      - UPSTREAM_PORT=8021
+    volumes:
+      - ./nginx/prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    networks:
+      - prod-network
+    depends_on:
+      - app
+    restart: unless-stopped
+    profiles:
+      - nginx-prod
